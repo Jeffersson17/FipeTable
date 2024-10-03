@@ -18,10 +18,7 @@ def list_brands():
     url = f'{BASE_URL}'
     response = requests.get(url)
     brands = response.json()
-    names_brands = []
-
-    for item in brands:
-        names_brands.append(item['nome'])
+    names_brands = [item['nome'] for item in brands]
     return names_brands
 
 # Função para encontrar o código do modelo da marca
@@ -48,11 +45,7 @@ def list_ages(code_mark, code_model):
     url = f'{BASE_URL}/{code_mark}/modelos/{code_model}/anos'
     response = requests.get(url)
     age = response.json()
-    ages = []
-
-
-    for item in age:
-        ages.append(item['nome'])
+    ages = [item['nome'] for item in age]
     return ages
 
 # Função para encontrar o preço da marca e do modelo

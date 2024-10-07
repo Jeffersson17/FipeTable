@@ -1,0 +1,9 @@
+node_modules/
+
+*.tsbuildinfo
+
+*.log
+
+.vscode/
+
+*.env

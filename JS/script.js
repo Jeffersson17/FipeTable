@@ -74,5 +74,3 @@ async function getFipePrice(brand, model, age) {
         return `Erro ao procurar o preço!`
     }
 }
-
-getFipePrice("acura", "nsx", 1995)

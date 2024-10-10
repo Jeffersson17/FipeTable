@@ -6,7 +6,7 @@
             v-model="selectedBrand"
             label="Selecione a Marca"
             :items="listBrand"
-            @change="listModels"
+            @change="modelsList"
             ></v-combobox>
         </div>
         <div class="mb-3 row">
@@ -14,7 +14,7 @@
             v-model="selectedModel"
             label="Selecione o Modelo"
             :items="listModel"
-            @change="listAges"
+            @change="agesList"
             ></v-combobox>
         </div>
         <div class="mb-3 row">
@@ -39,8 +39,11 @@
 </template>
 
 <script>
+const axios = require("axios");
+const BASE_URL = "https://parallelum.com.br/fipe/api/v1/carros/marcas";
+
 export default {
-    name: 'PriceFipeTable',
+    name: "PriceFipeTable",
     data() {
         return {
             selectedBrand:"",
@@ -54,67 +57,72 @@ export default {
     },
 
     created() {
-        this.listBrands()
+        this.brandsList()
     },
 
     methods: {
+        // Busca o preço na Tabela FIPE da marca, modelo e ano selecionado
         async fetchFipePrice() {
             this.result = await getFipePrice(this.selectedBrand, this.selectedModel, this.selectedAge)
         },
-        async listBrands() {
+
+        // Funções para listar as marcas, modelos e os anos
+        async brandsList() {
             try {
                 const response = await axios.get(BASE_URL);
                 this.listBrand = response.data.map(brand => brand.nome);
             } catch (error) {
-                console.error('Erro ao buscar as marcas:', error.message);
+                console.error("Erro ao buscar as marcas:", error.message);
             }
         },
-        async listModels() {
-            if (!this.selectedBrand) return "Não foi possivel encontrar os modelos";
+
+        async modelsList() {
+            if (!this.selectedBrand) {
+                this.result = "Não foi possivel encontrar os modelos";
+                return;
+            }
             try {
                 const codeBrand = await getBrandCode(this.selectedBrand);
-                console.log('Código da marca selecionada:', codeBrand);
                 const response = await axios.get(`${BASE_URL}/${codeBrand}/modelos`);
                 this.listModel = response.data.modelos.map(model => model.nome)
-                console.log('Modelos carregados:', this.listModel);
-
             } catch(error) {
-                console.error('Erro ao buscar os modelos:', error.message);
+                console.error("Erro ao buscar os modelos:", error.message);
             }
         },
-        async listAges() {
+
+        async agesList() {
+            if (!this.selectedModel) {
+                this.result = "Não foi possivel encontrar os anos";
+                return;
+            }
             try {
                 const codeBrand = await getBrandCode(this.selectedBrand);
                 const codeModel = await getModelCode(codeBrand, this.selectedModel)
                 const response = await axios.get(`${BASE_URL}/${codeBrand}/modelos/${codeModel}/anos`);
                 this.listAge = response.data.map(age => age.nome)
-
             } catch(error) {
-                console.error('Erro ao buscar os anos:', error.message);
+                console.error("Erro ao buscar os anos:", error.message);
             }
         }
     }
 }
 
-const axios = require('axios');
-
-const BASE_URL = 'https://parallelum.com.br/fipe/api/v1/carros/marcas';
-
-async function getBrandCode(mark) {
+// Funções utilitárias
+async function getBrandCode(brand) {
     let request = await axios.get(BASE_URL);
     let response = request.data;
 
     for (let item of response) {
-        if (item.nome.toUpperCase() === mark.toUpperCase()) {
+        if (item.nome.toUpperCase() === brand.toUpperCase()) {
             return item.codigo;
         }
     }
-    return 'Marca não encontrada';
+    return "Marca não encontrada";
 }
 
 async function getModelCode(code_brand, model_name) {
     try {
-        let url = `${BASE_URL}/${code_brand}/modelos`
+        let url = `${BASE_URL}/${code_brand}/modelos`;
         let request = await axios.get(url);
         let response = request.data.modelos;
 
@@ -123,10 +131,10 @@ async function getModelCode(code_brand, model_name) {
                 return item.codigo;
             }
         }
-        return 'Modelo não encontrado';
+        return "Modelo não encontrado";
     }catch(error) {
-        console.log('Erro na requisição: ', error.message)
-        return 'Erro ao buscar o modelo'
+        console.log("Erro na requisição: ", error.message);
+        return "Erro ao buscar o modelo";
     }
 }
 
@@ -144,23 +152,23 @@ async function getPrice(code_brand, code_model, age) {
                 return price;
             }
         }
-        return 'Ano não encontrado';
+        return "Ano não encontrado";
     } catch (error) {
-        console.error('Erro na requisição:', error.message);
-        return 'Erro ao buscar o preço';
+        console.error("Erro na requisição:", error.message);
+        return "Erro ao buscar o preço";
     }
 }
 
 async function getFipePrice(brand, model, age) {
     try {
         let brandCode = await getBrandCode(brand);
-        if (brandCode === 'Marca não encontrada') {
+        if (brandCode === "Marca não encontrada") {
             console.log(brandCode);
             return;
         }
 
         let modelCode = await getModelCode(brandCode, model);
-        if (modelCode === 'Modelo não encontrado') {
+        if (modelCode === "Modelo não encontrado") {
             console.log(modelCode);
             return;
         }
@@ -168,26 +176,26 @@ async function getFipePrice(brand, model, age) {
         let price = await getPrice(brandCode, modelCode, age);
         return `O preço do(a) ${brand} ${model} ${age} é: ${price}`;
     } catch(error) {
-        console.log('Erro ao procurar o preço na tabela FIPE: ', error.message)
-        return `Erro ao procurar o preço!`
+        console.log("Erro ao procurar o preço na tabela FIPE: ", error.message);
+        return "Erro ao buscar o preço na tabela";
     }
 }
 </script>
 
 <style>
 h1 {
-    font-family: 'Courier New', Courier, monospace;
+    font-family: "Courier New", Courier, monospace;
     text-align: center;
     margin: 30px;
 }
 
 label {
-    font-family: 'Copperplate';
+    font-family: "Copperplate";
 }
 
 #result {
     margin: 15px;
-    font-family: 'Copperplate';
+    font-family: "Copperplate";
     text-align: center
 }
 

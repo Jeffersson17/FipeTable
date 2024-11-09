@@ -15,8 +15,5 @@ export default {
   components: {
     PriceFipeTable,
   },
-
-  data: () => ({
-  }),
 };
 </script>
